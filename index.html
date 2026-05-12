@@ -1,231 +1,114 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=60mm, initial-scale=1.0">
-<title>Arqueo de Caja</title>
-<style>
-body {
-    font-family: tahoma, Helvetica, sans-serif;
-    margin: 0;
-    font-size: 3mm;
-    text-align: left;
-}
-#thermal-pos {
-    max-width: 60mm;
-    margin: 0 auto;
-    padding: 1mm;
-}
-.center {
-    text-align: center;
-}
-.line {
-    border-top: 1px dashed #000;
-    margin: 2mm 0;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 2.8mm;
-}
-.table th,
-.table td {
-    padding: 0.8mm 0;
-}
-.right {
-    text-align: right;
-}
-.bold {
-    font-weight: bold;
-}
-.total-row {
-    font-size: 3.2mm;
-    font-weight: bold;
-}
-.obs {
-    min-height: 10mm;
-}
-.firma {
-    margin-top: 8mm;
-    text-align: center;
-}
-@media print {
-    body {
-        width: 60mm;
-    }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=60mm, initial-scale=1.0">
+    <title>Arqueo de Caja</title>
+    <style>
+        body { font-family: 'Helvetica', Arial, sans-serif; width: 58mm; margin: 0 auto; padding: 2mm; font-size: 11px; color: #000; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 2mm 0; }
+        table { width: 100%; border-collapse: collapse; margin: 1mm 0; }
+        th { text-align: left; border-bottom: 1px solid #000; }
+        .right { text-align: right; }
+        .total-box { font-size: 13px; background: #f0f0f0; padding: 1mm; }
+    </style>
 </head>
 <body>
-<script>
-const params = new URLSearchParams(window.location.search);
-
-function getValue(key, def=""){
-    return params.has(key) ? decodeURIComponent(params.get(key)) : def;
-}
-
-function formatNumber(value){
-    const num = parseFloat(value || 0);
-    return isNaN(num) ? "0" : num.toLocaleString('es-CO');
-}
-
-const caja = getValue("caja","CJ-001");
-const cajero = getValue("cajero","---");
-const apertura = getValue("fechaApertura","---");
-const cierre = getValue("fechaCierre","---");
-const saldoInicial = formatNumber(getValue("saldoInicial",0));
-const ingresos = formatNumber(getValue("ingresos",0));
-const egresos = formatNumber(getValue("egresos",0));
-const totalSistema = formatNumber(getValue("totalSistema",0));
-const efectivoFisico = formatNumber(getValue("efectivoFisico",0));
-const diferenciaRaw = parseFloat(getValue("diferencia",0)) || 0;
-const diferencia = formatNumber(diferenciaRaw);
-const observacion = getValue("observacion","Sin novedades");
-const estado = getValue("estado","CERRADA");
-
-// Se extraen los arreglos generados en AppSheet
-let cantidades = getValue("cantidades","0").split(",");
-let productos = getValue("productos","").split(",");
-let preciosUnitarios = getValue("totales","0").split(",");
-
-// Mapeamos fila por fila y calculamos el subtotal real de esa línea
-let result = cantidades.map((c, i) => {
-    let cant = parseInt((c || "0").trim());
-    let precio = parseFloat((preciosUnitarios[i] || "0").trim());
-    return {
-        cantidad: cant,
-        descripcion: (productos[i] || "").trim(),
-        subtotal: cant * precio // Total de esta línea específica
-    };
-});
-
-window.onload = function(){
-    renderTicket();
-    setTimeout(()=>{
-        window.print();
-    }, 1500); // Se lanza la impresión 1.5 segundos después de cargar
-};
-
-function renderTicket(){
-    document.getElementById("caja").textContent = caja;
-    document.getElementById("cajero").textContent = cajero;
-    document.getElementById("apertura").textContent = apertura;
-    document.getElementById("cierre").textContent = cierre;
-    document.getElementById("saldoInicial").textContent = "$"+saldoInicial;
-    document.getElementById("ingresos").textContent = "$"+ingresos;
-    document.getElementById("egresos").textContent = "$"+egresos;
-    document.getElementById("totalSistema").textContent = "$"+totalSistema;
-    document.getElementById("efectivoFisico").textContent = "$"+efectivoFisico;
-    document.getElementById("diferencia").textContent = "$"+diferencia;
-    document.getElementById("observacion").textContent = observacion;
-    document.getElementById("estado").textContent = estado;
-    document.getElementById("resultado").textContent = 
-        diferenciaRaw === 0 ? "CUADRA EXACTO" : "REVISAR DIFERENCIA";
-
-    const tablaBody = document.getElementById("tablaBody");
-    const agrupados = {};
-
-    // Agrupamos sumando cantidades y sumando subtotales por producto
-    result.forEach(row => {
-        if(row.descripcion !== "" && row.cantidad > 0){
-            if(!agrupados[row.descripcion]){
-                agrupados[row.descripcion] = {
-                    cantidad: 0,
-                    totalAcumulado: 0
-                };
-            }
-            agrupados[row.descripcion].cantidad += row.cantidad;
-            agrupados[row.descripcion].totalAcumulado += row.subtotal;
-        }
-    });
-
-    // Renderizamos la tabla consolidada en el HTML
-    Object.keys(agrupados).forEach(nombre => {
-        const item = agrupados[nombre];
-        const newRow = document.createElement("tr");
-        newRow.innerHTML = `
-            <td>${item.cantidad}</td>
-            <td>${nombre}</td>
-            <td class="right">$${item.totalAcumulado.toLocaleString('es-CO')}</td>
-        `;
-        tablaBody.appendChild(newRow);
-    });
-}
-</script>
-
-<div id="thermal-pos">
-    <div class="center bold">
-        ARQUEO DE CAJA
-    </div>
-    <p>
-        Caja: <span id="caja"></span><br>
-        Cajero: <span id="cajero"></span><br>
-        Fecha apertura: <span id="apertura"></span><br>
-        Fecha cierre: <span id="cierre"></span>
-    </p>
-    
+    <div class="center bold" style="font-size: 14px;">TICKET DE ARQUEO</div>
     <div class="line"></div>
     
-    <table class="table">
+    <div>
+        <b>Caja:</b> <span id="caja"></span><br>
+        <b>Cajero:</b> <span id="cajero"></span><br>
+        <b>Apertura:</b> <span id="apertura"></span><br>
+        <b>Cierre:</b> <span id="cierre"></span>
+    </div>
+
+    <div class="line"></div>
+    <b>DETALLE DE VENTAS:</b>
+    <table>
         <thead>
             <tr>
                 <th>Cant</th>
-                <th>Descripción</th>
+                <th>Producto</th>
                 <th class="right">Total</th>
             </tr>
         </thead>
         <tbody id="tablaBody"></tbody>
     </table>
-    
+
     <div class="line"></div>
-    
-    <table class="table">
-        <tr><td>SALDO INICIAL</td><td class="right" id="saldoInicial"></td></tr>
-        <tr><td>INGRESOS</td><td class="right" id="ingresos"></td></tr>
-        <tr><td>EGRESOS</td><td class="right" id="egresos"></td></tr>
+    <table>
+        <tr><td>SALDO INICIAL:</td><td class="right" id="sIni"></td></tr>
+        <tr><td>(+) INGRESOS:</td><td class="right" id="ing"></td></tr>
+        <tr><td>(-) EGRESOS:</td><td class="right" id="egr"></td></tr>
+        <tr class="bold total-box"><td>TOTAL SISTEMA:</td><td class="right" id="tSis"></td></tr>
+        <tr class="bold"><td>EFECTIVO FÍSICO:</td><td class="right" id="eFis"></td></tr>
+        <tr class="bold"><td>DIFERENCIA:</td><td class="right" id="dif"></td></tr>
     </table>
-    
+
     <div class="line"></div>
-    
-    <table class="table">
-        <tr class="total-row">
-            <td>TOTAL SISTEMA</td>
-            <td class="right" id="totalSistema"></td>
-        </tr>
-    </table>
-    <br>
-    <table class="table">
-        <tr class="total-row">
-            <td>EFECTIVO FÍSICO</td>
-            <td class="right" id="efectivoFisico"></td>
-        </tr>
-    </table>
-    
-    <div class="line"></div>
-    
-    <table class="table">
-        <tr class="total-row">
-            <td>DIFERENCIA</td>
-            <td class="right" id="diferencia"></td>
-        </tr>
-    </table>
-    
-    <div class="center bold" id="resultado"></div>
-    
-    <div class="line"></div>
-    
-    <p>
-        Observación:<br>
-        <span class="obs" id="observacion"></span>
-    </p>
-    <p>
-        Estado: <span id="estado"></span>
-    </p>
-    
-    <div class="firma">
-        ____________________<br>
-        Responsable
+    <b>OBSERVACIONES:</b><br>
+    <span id="obs"></span><br><br>
+    <b>ESTADO:</b> <span id="est"></span>
+
+    <div class="center" style="margin-top: 10mm;">
+        __________________________<br>
+        Firma de Responsable
     </div>
-</div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Función para formatear moneda
+        const f = (v) => "$ " + parseFloat(v || 0).toLocaleString('es-CO');
+
+        // Cargar datos básicos
+        document.getElementById('caja').innerText = urlParams.get('caja');
+        document.getElementById('cajero').innerText = urlParams.get('cajero');
+        document.getElementById('apertura').innerText = urlParams.get('fechaApertura');
+        document.getElementById('cierre').innerText = urlParams.get('fechaCierre');
+        document.getElementById('sIni').innerText = f(urlParams.get('saldoInicial'));
+        document.getElementById('ing').innerText = f(urlParams.get('ingresos'));
+        document.getElementById('egr').innerText = f(urlParams.get('egresos'));
+        document.getElementById('tSis').innerText = f(urlParams.get('totalSistema'));
+        document.getElementById('eFis').innerText = f(urlParams.get('efectivoFisico'));
+        document.getElementById('dif').innerText = f(urlParams.get('diferencia'));
+        document.getElementById('obs').innerText = urlParams.get('observacion') || "Sin novedades";
+        document.getElementById('est').innerText = urlParams.get('estado');
+
+        // Procesar productos
+        const cants = (urlParams.get('cantidades') || "").split(',');
+        const prods = (urlParams.get('productos') || "").split(',');
+        const prices = (urlParams.get('totales') || "").split(',');
+        const tbody = document.getElementById('tablaBody');
+
+        let agrupados = {};
+
+        prods.forEach((nombre, i) => {
+            let n = nombre.trim();
+            if(n !== "") {
+                let q = parseInt(cants[i] || 0);
+                let p = parseFloat(prices[i] || 0);
+                if(!agrupados[n]) agrupados[n] = { q: 0, t: 0 };
+                agrupados[n].q += q;
+                agrupados[n].t += (q * p);
+            }
+        });
+
+        for (let p in agrupados) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${agrupados[p].q}</td>
+                <td>${p}</td>
+                <td class="right">${f(agrupados[p].t)}</td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        window.onload = () => { setTimeout(() => { window.print(); }, 500); };
+    </script>
 </body>
 </html>
