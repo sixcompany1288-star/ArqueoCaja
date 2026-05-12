@@ -93,7 +93,9 @@ const ingresos = formatNumber(getValue("ingresos",0));
 const egresos = formatNumber(getValue("egresos",0));
 const totalSistema = formatNumber(getValue("totalSistema",0));
 const efectivoFisico = formatNumber(getValue("efectivoFisico",0));
-const diferencia = formatNumber(getValue("diferencia",0));
+
+const diferenciaRaw = parseFloat(getValue("diferencia",0)) || 0;
+const diferencia = formatNumber(diferenciaRaw);
 
 const observacion = getValue("observacion","Sin novedades");
 const estado = getValue("estado","CERRADA");
@@ -102,10 +104,10 @@ let cantidades = getValue("cantidades","0").split(",");
 let productos = getValue("productos","").split(",");
 let totales = getValue("totales","0").split(",");
 
-let result = cantidades.map((c,i)=>({
-    cantidad:c,
-    descripcion:productos[i] || "",
-    total:formatNumber(totales[i])
+let result = cantidades.map((c, i) => ({
+    cantidad: parseInt((c || "0").trim()),
+    descripcion: (productos[i] || "").trim(),
+    precio: parseFloat((totales[i] || "0").trim())
 }));
 
 window.onload = function(){
@@ -134,40 +136,41 @@ function renderTicket(){
     document.getElementById("estado").textContent = estado;
 
     document.getElementById("resultado").textContent =
-        parseFloat(diferencia) === 0 ? "CUADRA EXACTO" : "REVISAR DIFERENCIA";
+        diferenciaRaw === 0 ? "CUADRA EXACTO" : "REVISAR DIFERENCIA";
 
     const tablaBody = document.getElementById("tablaBody");
 
     const agrupados = {};
+
     result.forEach(row => {
-        if (row.descripcion.trim() !== "") {
-    
-            if (!agrupados[row.descripcion]) {
+        if(row.descripcion !== ""){
+
+            if(!agrupados[row.descripcion]){
                 agrupados[row.descripcion] = {
-                    cantidad: 0,
-                    total: 0
+                    cantidad:0,
+                    precio:row.precio
                 };
             }
-    
-            agrupados[row.descripcion].cantidad += parseInt(row.cantidad || 0);
-            agrupados[row.descripcion].total += parseFloat(
-                String(row.total).replace(/,/g, "")
-            );
+
+            agrupados[row.descripcion].cantidad += row.cantidad;
         }
     });
 
-Object.keys(agrupados).forEach(nombre => {
-    const item = agrupados[nombre];
+    Object.keys(agrupados).forEach(nombre => {
 
-    const newRow = document.createElement("tr");
-    newRow.innerHTML = `
-        <td>${item.cantidad}</td>
-        <td>${nombre}</td>
-        <td>$${item.total.toLocaleString('es-CO')}</td>
-    `;
+        const item = agrupados[nombre];
+        const total = item.cantidad * item.precio;
 
-    tablaBody.appendChild(newRow);
-});
+        const newRow = document.createElement("tr");
+
+        newRow.innerHTML = `
+            <td>${item.cantidad}</td>
+            <td>${nombre}</td>
+            <td class="right">$${total.toLocaleString('es-CO')}</td>
+        `;
+
+        tablaBody.appendChild(newRow);
+    });
 }
 </script>
 
