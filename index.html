@@ -3,112 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=60mm, initial-scale=1.0">
-    <title>Arqueo de Caja</title>
+    <title>Ticket Arqueo Corregido</title>
     <style>
-        body { font-family: 'Helvetica', Arial, sans-serif; width: 58mm; margin: 0 auto; padding: 2mm; font-size: 11px; color: #000; }
+        body { font-family: 'Courier New', Courier, monospace; width: 58mm; margin: 0; padding: 2mm; font-size: 11px; }
         .center { text-align: center; }
         .bold { font-weight: bold; }
-        .line { border-top: 1px dashed #000; margin: 2mm 0; }
-        table { width: 100%; border-collapse: collapse; margin: 1mm 0; }
-        th { text-align: left; border-bottom: 1px solid #000; }
+        .line { border-top: 1px dashed black; margin: 2mm 0; }
+        table { width: 100%; border-collapse: collapse; }
         .right { text-align: right; }
-        .total-box { font-size: 13px; background: #f0f0f0; padding: 1mm; }
+        .footer { margin-top: 10mm; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="center bold" style="font-size: 14px;">TICKET DE ARQUEO</div>
+    <div class="center bold">ARQUEO DE CAJA</div>
     <div class="line"></div>
-    
-    <div>
-        <b>Caja:</b> <span id="caja"></span><br>
-        <b>Cajero:</b> <span id="cajero"></span><br>
-        <b>Apertura:</b> <span id="apertura"></span><br>
-        <b>Cierre:</b> <span id="cierre"></span>
+    <div id="header">
+        Caja: <span id="caja"></span><br>
+        Cajero: <span id="cajero"></span><br>
+        Apertura: <span id="apertura"></span><br>
+        Cierre: <span id="cierre"></span>
     </div>
-
+    
     <div class="line"></div>
-    <b>DETALLE DE VENTAS:</b>
+    <b>RESUMEN DE VENTAS</b>
     <table>
         <thead>
             <tr>
-                <th>Cant</th>
-                <th>Producto</th>
+                <th style="text-align:left">Cant</th>
+                <th style="text-align:left">Producto</th>
                 <th class="right">Total</th>
             </tr>
         </thead>
-        <tbody id="tablaBody"></tbody>
+        <tbody id="detallesBody"></tbody>
     </table>
 
     <div class="line"></div>
     <table>
-        <tr><td>SALDO INICIAL:</td><td class="right" id="sIni"></td></tr>
-        <tr><td>(+) INGRESOS:</td><td class="right" id="ing"></td></tr>
-        <tr><td>(-) EGRESOS:</td><td class="right" id="egr"></td></tr>
-        <tr class="bold total-box"><td>TOTAL SISTEMA:</td><td class="right" id="tSis"></td></tr>
+        <tr><td>Saldo Inicial:</td><td class="right" id="sIni"></td></tr>
+        <tr><td>(+) Ingresos:</td><td class="right" id="ing"></td></tr>
+        <tr><td>(-) Egresos:</td><td class="right" id="egr"></td></tr>
+        <tr class="bold"><td>TOTAL SISTEMA:</td><td class="right" id="tSis"></td></tr>
         <tr class="bold"><td>EFECTIVO FÍSICO:</td><td class="right" id="eFis"></td></tr>
+        <tr class="line"><td></td><td></td></tr>
         <tr class="bold"><td>DIFERENCIA:</td><td class="right" id="dif"></td></tr>
     </table>
 
     <div class="line"></div>
-    <b>OBSERVACIONES:</b><br>
-    <span id="obs"></span><br><br>
-    <b>ESTADO:</b> <span id="est"></span>
+    <div><b>Obs:</b> <span id="obs"></span></div>
+    <div><b>Estado:</b> <span id="est"></span></div>
 
-    <div class="center" style="margin-top: 10mm;">
+    <div class="footer">
         __________________________<br>
-        Firma de Responsable
+        Firma Responsable
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        
-        // Función para formatear moneda
-        const f = (v) => "$ " + parseFloat(v || 0).toLocaleString('es-CO');
+        const url = new URLSearchParams(window.location.search);
+        const fmt = (n) => "$ " + parseFloat(n || 0).toLocaleString('es-CO');
 
-        // Cargar datos básicos
-        document.getElementById('caja').innerText = urlParams.get('caja');
-        document.getElementById('cajero').innerText = urlParams.get('cajero');
-        document.getElementById('apertura').innerText = urlParams.get('fechaApertura');
-        document.getElementById('cierre').innerText = urlParams.get('fechaCierre');
-        document.getElementById('sIni').innerText = f(urlParams.get('saldoInicial'));
-        document.getElementById('ing').innerText = f(urlParams.get('ingresos'));
-        document.getElementById('egr').innerText = f(urlParams.get('egresos'));
-        document.getElementById('tSis').innerText = f(urlParams.get('totalSistema'));
-        document.getElementById('eFis').innerText = f(urlParams.get('efectivoFisico'));
-        document.getElementById('dif').innerText = f(urlParams.get('diferencia'));
-        document.getElementById('obs').innerText = urlParams.get('observacion') || "Sin novedades";
-        document.getElementById('est').innerText = urlParams.get('estado');
+        // Llenar datos generales
+        document.getElementById('caja').innerText = url.get('caja');
+        document.getElementById('cajero').innerText = url.get('cajero');
+        document.getElementById('apertura').innerText = url.get('fechaApertura');
+        document.getElementById('cierre').innerText = url.get('fechaCierre');
+        document.getElementById('sIni').innerText = fmt(url.get('saldoInicial'));
+        document.getElementById('ing').innerText = fmt(url.get('ingresos'));
+        document.getElementById('egr').innerText = fmt(url.get('egresos'));
+        document.getElementById('tSis').innerText = fmt(url.get('totalSistema'));
+        document.getElementById('eFis').innerText = fmt(url.get('efectivoFisico'));
+        document.getElementById('dif').innerText = fmt(url.get('diferencia'));
+        document.getElementById('obs').innerText = url.get('observacion') || "Sin novedades";
+        document.getElementById('est').innerText = url.get('estado');
 
-        // Procesar productos
-        const cants = (urlParams.get('cantidades') || "").split(',');
-        const prods = (urlParams.get('productos') || "").split(',');
-        const prices = (urlParams.get('totales') || "").split(',');
-        const tbody = document.getElementById('tablaBody');
+        // Procesar Listas (Cantidades, Productos, Precios)
+        const cants = (url.get('cantidades') || "").split(',');
+        const prods = (url.get('productos') || "").split(',');
+        const prices = (url.get('totales') || "").split(',');
 
-        let agrupados = {};
+        const agrupados = {};
 
+        // Recorremos las listas alineadas
         prods.forEach((nombre, i) => {
-            let n = nombre.trim();
-            if(n !== "") {
-                let q = parseInt(cants[i] || 0);
-                let p = parseFloat(prices[i] || 0);
-                if(!agrupados[n]) agrupados[n] = { q: 0, t: 0 };
-                agrupados[n].q += q;
-                agrupados[n].t += (q * p);
+            const nom = nombre.trim();
+            if (nom !== "") {
+                const q = parseInt(cants[i] || 0);
+                const p = parseFloat(prices[i] || 0);
+                
+                if (!agrupados[nom]) {
+                    agrupados[nom] = { cantidad: 0, subtotal: 0 };
+                }
+                agrupados[nom].cantidad += q;
+                agrupados[nom].subtotal += (q * p);
             }
         });
 
-        for (let p in agrupados) {
+        // Dibujar la tabla
+        const tbody = document.getElementById('detallesBody');
+        for (const [nombre, data] of Object.entries(agrupados)) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${agrupados[p].q}</td>
-                <td>${p}</td>
-                <td class="right">${f(agrupados[p].t)}</td>
+                <td>${data.cantidad}</td>
+                <td>${nombre}</td>
+                <td class="right">${fmt(data.subtotal)}</td>
             `;
             tbody.appendChild(tr);
         }
 
-        window.onload = () => { setTimeout(() => { window.print(); }, 500); };
+        window.onload = () => { setTimeout(() => { window.print(); }, 800); };
     </script>
 </body>
 </html>
