@@ -98,9 +98,9 @@ const diferencia = formatNumber(getValue("diferencia",0));
 const observacion = getValue("observacion","Sin novedades");
 const estado = getValue("estado","CERRADA");
 
-let cantidades = getValue("cantidades","0").split(",");
-let productos = getValue("productos","").split(",");
-let totales = getValue("totales","0").split(",");
+let cantidades = getValue("cantidades","0").split(",,");
+let productos = getValue("productos","").split(",,");
+let totales = getValue("totales","0").split(",,");
 
 let result = cantidades.map((c,i)=>({
     cantidad:c,
