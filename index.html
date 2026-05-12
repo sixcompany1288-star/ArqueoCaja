@@ -4,73 +4,59 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=60mm, initial-scale=1.0">
 <title>Arqueo de Caja</title>
-
 <style>
-body{
-    font-family:tahoma,Helvetica,sans-serif;
-    margin:0;
-    font-size:3mm;
-    text-align:left;
+body {
+    font-family: tahoma, Helvetica, sans-serif;
+    margin: 0;
+    font-size: 3mm;
+    text-align: left;
 }
-
-#thermal-pos{
-    max-width:60mm;
-    margin:0 auto;
-    padding:1mm;
+#thermal-pos {
+    max-width: 60mm;
+    margin: 0 auto;
+    padding: 1mm;
 }
-
-.center{
-    text-align:center;
+.center {
+    text-align: center;
 }
-
-.line{
-    border-top:1px dashed #000;
-    margin:2mm 0;
+.line {
+    border-top: 1px dashed #000;
+    margin: 2mm 0;
 }
-
-.table{
-    width:100%;
-    border-collapse:collapse;
-    font-size:2.8mm;
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 2.8mm;
 }
-
 .table th,
-.table td{
-    padding:0.8mm 0;
+.table td {
+    padding: 0.8mm 0;
 }
-
-.right{
-    text-align:right;
+.right {
+    text-align: right;
 }
-
-.bold{
-    font-weight:bold;
+.bold {
+    font-weight: bold;
 }
-
-.total-row{
-    font-size:3.2mm;
-    font-weight:bold;
+.total-row {
+    font-size: 3.2mm;
+    font-weight: bold;
 }
-
-.obs{
-    min-height:10mm;
+.obs {
+    min-height: 10mm;
 }
-
-.firma{
-    margin-top:8mm;
-    text-align:center;
+.firma {
+    margin-top: 8mm;
+    text-align: center;
 }
-
-@media print{
-    body{
-        width:60mm;
+@media print {
+    body {
+        width: 60mm;
     }
 }
 </style>
 </head>
-
 <body>
-
 <script>
 const params = new URLSearchParams(window.location.search);
 
@@ -87,173 +73,159 @@ const caja = getValue("caja","CJ-001");
 const cajero = getValue("cajero","---");
 const apertura = getValue("fechaApertura","---");
 const cierre = getValue("fechaCierre","---");
-
 const saldoInicial = formatNumber(getValue("saldoInicial",0));
 const ingresos = formatNumber(getValue("ingresos",0));
 const egresos = formatNumber(getValue("egresos",0));
 const totalSistema = formatNumber(getValue("totalSistema",0));
 const efectivoFisico = formatNumber(getValue("efectivoFisico",0));
-
 const diferenciaRaw = parseFloat(getValue("diferencia",0)) || 0;
 const diferencia = formatNumber(diferenciaRaw);
-
 const observacion = getValue("observacion","Sin novedades");
 const estado = getValue("estado","CERRADA");
 
+// Se extraen los arreglos generados en AppSheet
 let cantidades = getValue("cantidades","0").split(",");
 let productos = getValue("productos","").split(",");
-let totales = getValue("totales","0").split(",");
+let preciosUnitarios = getValue("totales","0").split(",");
 
-let result = cantidades.map((c, i) => ({
-    cantidad: parseInt((c || "0").trim()),
-    descripcion: (productos[i] || "").trim(),
-    precio: parseFloat((totales[i] || "0").trim())
-}));
+// Mapeamos fila por fila y calculamos el subtotal real de esa línea
+let result = cantidades.map((c, i) => {
+    let cant = parseInt((c || "0").trim());
+    let precio = parseFloat((preciosUnitarios[i] || "0").trim());
+    return {
+        cantidad: cant,
+        descripcion: (productos[i] || "").trim(),
+        subtotal: cant * precio // Total de esta línea específica
+    };
+});
 
 window.onload = function(){
     renderTicket();
-
     setTimeout(()=>{
         window.print();
-    },3000);
+    }, 1500); // Se lanza la impresión 1.5 segundos después de cargar
 };
 
 function renderTicket(){
-
     document.getElementById("caja").textContent = caja;
     document.getElementById("cajero").textContent = cajero;
     document.getElementById("apertura").textContent = apertura;
     document.getElementById("cierre").textContent = cierre;
-
     document.getElementById("saldoInicial").textContent = "$"+saldoInicial;
     document.getElementById("ingresos").textContent = "$"+ingresos;
     document.getElementById("egresos").textContent = "$"+egresos;
     document.getElementById("totalSistema").textContent = "$"+totalSistema;
     document.getElementById("efectivoFisico").textContent = "$"+efectivoFisico;
     document.getElementById("diferencia").textContent = "$"+diferencia;
-
     document.getElementById("observacion").textContent = observacion;
     document.getElementById("estado").textContent = estado;
-
-    document.getElementById("resultado").textContent =
+    document.getElementById("resultado").textContent = 
         diferenciaRaw === 0 ? "CUADRA EXACTO" : "REVISAR DIFERENCIA";
 
     const tablaBody = document.getElementById("tablaBody");
-
     const agrupados = {};
 
+    // Agrupamos sumando cantidades y sumando subtotales por producto
     result.forEach(row => {
-        if(row.descripcion !== ""){
-
+        if(row.descripcion !== "" && row.cantidad > 0){
             if(!agrupados[row.descripcion]){
                 agrupados[row.descripcion] = {
-                    cantidad:0,
-                    precio:row.precio
+                    cantidad: 0,
+                    totalAcumulado: 0
                 };
             }
-
             agrupados[row.descripcion].cantidad += row.cantidad;
+            agrupados[row.descripcion].totalAcumulado += row.subtotal;
         }
     });
 
+    // Renderizamos la tabla consolidada en el HTML
     Object.keys(agrupados).forEach(nombre => {
-
         const item = agrupados[nombre];
-        const total = item.cantidad * item.precio;
-
         const newRow = document.createElement("tr");
-
         newRow.innerHTML = `
             <td>${item.cantidad}</td>
             <td>${nombre}</td>
-            <td class="right">$${total.toLocaleString('es-CO')}</td>
+            <td class="right">$${item.totalAcumulado.toLocaleString('es-CO')}</td>
         `;
-
         tablaBody.appendChild(newRow);
     });
 }
 </script>
 
 <div id="thermal-pos">
-
-<div class="center bold">
-ARQUEO DE CAJA
+    <div class="center bold">
+        ARQUEO DE CAJA
+    </div>
+    <p>
+        Caja: <span id="caja"></span><br>
+        Cajero: <span id="cajero"></span><br>
+        Fecha apertura: <span id="apertura"></span><br>
+        Fecha cierre: <span id="cierre"></span>
+    </p>
+    
+    <div class="line"></div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Cant</th>
+                <th>Descripción</th>
+                <th class="right">Total</th>
+            </tr>
+        </thead>
+        <tbody id="tablaBody"></tbody>
+    </table>
+    
+    <div class="line"></div>
+    
+    <table class="table">
+        <tr><td>SALDO INICIAL</td><td class="right" id="saldoInicial"></td></tr>
+        <tr><td>INGRESOS</td><td class="right" id="ingresos"></td></tr>
+        <tr><td>EGRESOS</td><td class="right" id="egresos"></td></tr>
+    </table>
+    
+    <div class="line"></div>
+    
+    <table class="table">
+        <tr class="total-row">
+            <td>TOTAL SISTEMA</td>
+            <td class="right" id="totalSistema"></td>
+        </tr>
+    </table>
+    <br>
+    <table class="table">
+        <tr class="total-row">
+            <td>EFECTIVO FÍSICO</td>
+            <td class="right" id="efectivoFisico"></td>
+        </tr>
+    </table>
+    
+    <div class="line"></div>
+    
+    <table class="table">
+        <tr class="total-row">
+            <td>DIFERENCIA</td>
+            <td class="right" id="diferencia"></td>
+        </tr>
+    </table>
+    
+    <div class="center bold" id="resultado"></div>
+    
+    <div class="line"></div>
+    
+    <p>
+        Observación:<br>
+        <span class="obs" id="observacion"></span>
+    </p>
+    <p>
+        Estado: <span id="estado"></span>
+    </p>
+    
+    <div class="firma">
+        ____________________<br>
+        Responsable
+    </div>
 </div>
-
-<p>
-Caja: <span id="caja"></span><br>
-Cajero: <span id="cajero"></span><br>
-Fecha apertura: <span id="apertura"></span><br>
-Fecha cierre: <span id="cierre"></span>
-</p>
-
-<div class="line"></div>
-
-<table class="table">
-<thead>
-<tr>
-<th>Cant</th>
-<th>Descripción</th>
-<th class="right">Total</th>
-</tr>
-</thead>
-<tbody id="tablaBody"></tbody>
-</table>
-
-<div class="line"></div>
-
-<table class="table">
-<tr><td>SALDO INICIAL</td><td class="right" id="saldoInicial"></td></tr>
-<tr><td>INGRESOS</td><td class="right" id="ingresos"></td></tr>
-<tr><td>EGRESOS</td><td class="right" id="egresos"></td></tr>
-</table>
-
-<div class="line"></div>
-
-<table class="table">
-<tr class="total-row">
-<td>TOTAL SISTEMA</td>
-<td class="right" id="totalSistema"></td>
-</tr>
-</table>
-
-<br>
-
-<table class="table">
-<tr class="total-row">
-<td>EFECTIVO FÍSICO</td>
-<td class="right" id="efectivoFisico"></td>
-</tr>
-</table>
-
-<div class="line"></div>
-
-<table class="table">
-<tr class="total-row">
-<td>DIFERENCIA</td>
-<td class="right" id="diferencia"></td>
-</tr>
-</table>
-
-<div class="center bold" id="resultado"></div>
-
-<div class="line"></div>
-
-<p>
-Observación:<br>
-<span class="obs" id="observacion"></span>
-</p>
-
-<p>
-Estado: <span id="estado"></span>
-</p>
-
-<div class="firma">
-____________________<br>
-Responsable
-</div>
-
-</div>
-
 </body>
 </html>
