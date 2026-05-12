@@ -138,17 +138,36 @@ function renderTicket(){
 
     const tablaBody = document.getElementById("tablaBody");
 
-    result.forEach(row=>{
-        if(row.descripcion.trim()!==""){
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${row.cantidad}</td>
-                <td>${row.descripcion}</td>
-                <td class="right">${row.total}</td>
-            `;
-            tablaBody.appendChild(tr);
+    const agrupados = {};
+    result.forEach(row => {
+        if (row.descripcion.trim() !== "") {
+    
+            if (!agrupados[row.descripcion]) {
+                agrupados[row.descripcion] = {
+                    cantidad: 0,
+                    total: 0
+                };
+            }
+    
+            agrupados[row.descripcion].cantidad += parseInt(row.cantidad || 0);
+            agrupados[row.descripcion].total += parseFloat(
+                String(row.total).replace(/,/g, "")
+            );
         }
     });
+
+Object.keys(agrupados).forEach(nombre => {
+    const item = agrupados[nombre];
+
+    const newRow = document.createElement("tr");
+    newRow.innerHTML = `
+        <td>${item.cantidad}</td>
+        <td>${nombre}</td>
+        <td>$${item.total.toLocaleString('es-CO')}</td>
+    `;
+
+    tablaBody.appendChild(newRow);
+});
 }
 </script>
 
