@@ -3,54 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=60mm, initial-scale=1.0">
-    <title>Ticket Arqueo Corregido</title>
+    <title>Ticket Arqueo Detallado</title>
     <style>
-        body { font-family: 'Courier New', Courier, monospace; width: 58mm; margin: 0; padding: 2mm; font-size: 11px; }
+        body { font-family: 'Courier New', Courier, monospace; width: 58mm; margin: 0; padding: 2mm; font-size: 11px; color: #000; }
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .line { border-top: 1px dashed black; margin: 2mm 0; }
         table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; border-bottom: 1px solid #000; }
         .right { text-align: right; }
         .footer { margin-top: 10mm; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="center bold">ARQUEO DE CAJA</div>
+    <div class="center bold" style="font-size: 14px;">TICKET DE ARQUEO</div>
     <div class="line"></div>
-    <div id="header">
-        Caja: <span id="caja"></span><br>
-        Cajero: <span id="cajero"></span><br>
-        Apertura: <span id="apertura"></span><br>
-        Cierre: <span id="cierre"></span>
-    </div>
     
+    <div>
+        <b>Caja:</b> <span id="caja"></span><br>
+        <b>Cajero:</b> <span id="cajero"></span><br>
+        <b>Inicio:</b> <span id="apertura"></span><br>
+        <b>Cierre:</b> <span id="cierre"></span>
+    </div>
+
     <div class="line"></div>
-    <b>RESUMEN DE VENTAS</b>
+    <div class="bold">DESGLOSE DE VENTAS</div>
     <table>
         <thead>
             <tr>
-                <th style="text-align:left">Cant</th>
-                <th style="text-align:left">Producto</th>
+                <th>Cant</th>
+                <th>Producto</th>
                 <th class="right">Total</th>
             </tr>
         </thead>
-        <tbody id="detallesBody"></tbody>
+        <tbody id="tablaBody"></tbody>
     </table>
 
     <div class="line"></div>
     <table>
-        <tr><td>Saldo Inicial:</td><td class="right" id="sIni"></td></tr>
-        <tr><td>(+) Ingresos:</td><td class="right" id="ing"></td></tr>
-        <tr><td>(-) Egresos:</td><td class="right" id="egr"></td></tr>
+        <tr><td>SALDO INICIAL:</td><td class="right" id="sIni"></td></tr>
+        <tr><td>(+) INGRESOS:</td><td class="right" id="ing"></td></tr>
+        <tr><td>(-) EGRESOS:</td><td class="right" id="egr"></td></tr>
         <tr class="bold"><td>TOTAL SISTEMA:</td><td class="right" id="tSis"></td></tr>
         <tr class="bold"><td>EFECTIVO FÍSICO:</td><td class="right" id="eFis"></td></tr>
-        <tr class="line"><td></td><td></td></tr>
         <tr class="bold"><td>DIFERENCIA:</td><td class="right" id="dif"></td></tr>
     </table>
 
     <div class="line"></div>
-    <div><b>Obs:</b> <span id="obs"></span></div>
-    <div><b>Estado:</b> <span id="est"></span></div>
+    <b>Observaciones:</b><br>
+    <span id="obs"></span><br>
+    <b>Estado:</b> <span id="est"></span>
 
     <div class="footer">
         __________________________<br>
@@ -58,56 +60,46 @@
     </div>
 
     <script>
-        const url = new URLSearchParams(window.location.search);
-        const fmt = (n) => "$ " + parseFloat(n || 0).toLocaleString('es-CO');
+        const p = new URLSearchParams(window.location.search);
+        const moneda = (v) => "$ " + parseFloat(v || 0).toLocaleString('es-CO');
 
-        // Llenar datos generales
-        document.getElementById('caja').innerText = url.get('caja');
-        document.getElementById('cajero').innerText = url.get('cajero');
-        document.getElementById('apertura').innerText = url.get('fechaApertura');
-        document.getElementById('cierre').innerText = url.get('fechaCierre');
-        document.getElementById('sIni').innerText = fmt(url.get('saldoInicial'));
-        document.getElementById('ing').innerText = fmt(url.get('ingresos'));
-        document.getElementById('egr').innerText = fmt(url.get('egresos'));
-        document.getElementById('tSis').innerText = fmt(url.get('totalSistema'));
-        document.getElementById('eFis').innerText = fmt(url.get('efectivoFisico'));
-        document.getElementById('dif').innerText = fmt(url.get('diferencia'));
-        document.getElementById('obs').innerText = url.get('observacion') || "Sin novedades";
-        document.getElementById('est').innerText = url.get('estado');
+        // Cargar Datos de Encabezado
+        document.getElementById('caja').innerText = p.get('caja');
+        document.getElementById('cajero').innerText = p.get('cajero');
+        document.getElementById('apertura').innerText = p.get('fechaApertura');
+        document.getElementById('cierre').innerText = p.get('fechaCierre');
+        document.getElementById('sIni').innerText = moneda(p.get('saldoInicial'));
+        document.getElementById('ing').innerText = moneda(p.get('ingresos'));
+        document.getElementById('egr').innerText = moneda(p.get('egresos'));
+        document.getElementById('tSis').innerText = moneda(p.get('totalSistema'));
+        document.getElementById('eFis').innerText = moneda(p.get('efectivoFisico'));
+        document.getElementById('dif').innerText = moneda(p.get('diferencia'));
+        document.getElementById('obs').innerText = p.get('observacion') || "Sin novedades";
+        document.getElementById('est').innerText = p.get('estado');
 
-        // Procesar Listas (Cantidades, Productos, Precios)
-        const cants = (url.get('cantidades') || "").split(',');
-        const prods = (url.get('productos') || "").split(',');
-        const prices = (url.get('totales') || "").split(',');
+        // Procesar Listas sin agrupar
+        const cants = (p.get('cantidades') || "").split(',');
+        const prods = (p.get('productos') || "").split(',');
+        const prices = (p.get('totales') || "").split(',');
+        const tbody = document.getElementById('tablaBody');
 
-        const agrupados = {};
-
-        // Recorremos las listas alineadas
+        // Recorremos la lista de productos y creamos una fila para CADA UNO
         prods.forEach((nombre, i) => {
-            const nom = nombre.trim();
-            if (nom !== "") {
-                const q = parseInt(cants[i] || 0);
-                const p = parseFloat(prices[i] || 0);
-                
-                if (!agrupados[nom]) {
-                    agrupados[nom] = { cantidad: 0, subtotal: 0 };
-                }
-                agrupados[nom].cantidad += q;
-                agrupados[nom].subtotal += (q * p);
+            let n = nombre.trim();
+            if(n !== "") {
+                const q = parseFloat(cants[i] || 0);
+                const precio = parseFloat(prices[i] || 0);
+                const subtotal = q * precio;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${q}</td>
+                    <td>${n}</td>
+                    <td class="right">${moneda(subtotal)}</td>
+                `;
+                tbody.appendChild(tr);
             }
         });
-
-        // Dibujar la tabla
-        const tbody = document.getElementById('detallesBody');
-        for (const [nombre, data] of Object.entries(agrupados)) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${data.cantidad}</td>
-                <td>${nombre}</td>
-                <td class="right">${fmt(data.subtotal)}</td>
-            `;
-            tbody.appendChild(tr);
-        }
 
         window.onload = () => { setTimeout(() => { window.print(); }, 800); };
     </script>
