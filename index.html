@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=60mm, initial-scale=1.0">
+<title>Arqueo de Caja</title>
+
+<style>
+body{
+    font-family:tahoma,Helvetica,sans-serif;
+    margin:0;
+    font-size:3mm;
+    text-align:left;
+}
+
+#thermal-pos{
+    max-width:60mm;
+    margin:0 auto;
+    padding:1mm;
+}
+
+.center{
+    text-align:center;
+}
+
+.line{
+    border-top:1px dashed #000;
+    margin:2mm 0;
+}
+
+.table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:2.8mm;
+}
+
+.table th,
+.table td{
+    padding:0.8mm 0;
+}
+
+.right{
+    text-align:right;
+}
+
+.bold{
+    font-weight:bold;
+}
+
+.total-row{
+    font-size:3.2mm;
+    font-weight:bold;
+}
+
+.obs{
+    min-height:10mm;
+}
+
+.firma{
+    margin-top:8mm;
+    text-align:center;
+}
+
+@media print{
+    body{
+        width:60mm;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+
+function getValue(key, def=""){
+    return params.has(key) ? decodeURIComponent(params.get(key)) : def;
+}
+
+function formatNumber(value){
+    const num = parseFloat(value || 0);
+    return isNaN(num) ? "0" : num.toLocaleString('es-CO');
+}
+
+const caja = getValue("caja","CJ-001");
+const cajero = getValue("cajero","---");
+const apertura = getValue("fechaApertura","---");
+const cierre = getValue("fechaCierre","---");
+
+const saldoInicial = formatNumber(getValue("saldoInicial",0));
+const ingresos = formatNumber(getValue("ingresos",0));
+const egresos = formatNumber(getValue("egresos",0));
+const totalSistema = formatNumber(getValue("totalSistema",0));
+const efectivoFisico = formatNumber(getValue("efectivoFisico",0));
+const diferencia = formatNumber(getValue("diferencia",0));
+
+const observacion = getValue("observacion","Sin novedades");
+const estado = getValue("estado","CERRADA");
+
+let cantidades = getValue("cantidades","0").split(",");
+let productos = getValue("productos","").split(",");
+let totales = getValue("totales","0").split(",");
+
+let result = cantidades.map((c,i)=>({
+    cantidad:c,
+    descripcion:productos[i] || "",
+    total:formatNumber(totales[i])
+}));
+
+window.onload = function(){
+    renderTicket();
+
+    setTimeout(()=>{
+        window.print();
+    },3000);
+};
+
+function renderTicket(){
+
+    document.getElementById("caja").textContent = caja;
+    document.getElementById("cajero").textContent = cajero;
+    document.getElementById("apertura").textContent = apertura;
+    document.getElementById("cierre").textContent = cierre;
+
+    document.getElementById("saldoInicial").textContent = "$"+saldoInicial;
+    document.getElementById("ingresos").textContent = "$"+ingresos;
+    document.getElementById("egresos").textContent = "$"+egresos;
+    document.getElementById("totalSistema").textContent = "$"+totalSistema;
+    document.getElementById("efectivoFisico").textContent = "$"+efectivoFisico;
+    document.getElementById("diferencia").textContent = "$"+diferencia;
+
+    document.getElementById("observacion").textContent = observacion;
+    document.getElementById("estado").textContent = estado;
+
+    document.getElementById("resultado").textContent =
+        parseFloat(diferencia) === 0 ? "CUADRA EXACTO" : "REVISAR DIFERENCIA";
+
+    const tablaBody = document.getElementById("tablaBody");
+
+    result.forEach(row=>{
+        if(row.descripcion.trim()!==""){
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row.cantidad}</td>
+                <td>${row.descripcion}</td>
+                <td class="right">${row.total}</td>
+            `;
+            tablaBody.appendChild(tr);
+        }
+    });
+}
+</script>
+
+<div id="thermal-pos">
+
+<div class="center bold">
+ARQUEO DE CAJA
+</div>
+
+<p>
+Caja: <span id="caja"></span><br>
+Cajero: <span id="cajero"></span><br>
+Fecha apertura: <span id="apertura"></span><br>
+Fecha cierre: <span id="cierre"></span>
+</p>
+
+<div class="line"></div>
+
+<table class="table">
+<thead>
+<tr>
+<th>Cant</th>
+<th>Descripción</th>
+<th class="right">Total</th>
+</tr>
+</thead>
+<tbody id="tablaBody"></tbody>
+</table>
+
+<div class="line"></div>
+
+<table class="table">
+<tr><td>SALDO INICIAL</td><td class="right" id="saldoInicial"></td></tr>
+<tr><td>INGRESOS</td><td class="right" id="ingresos"></td></tr>
+<tr><td>EGRESOS</td><td class="right" id="egresos"></td></tr>
+</table>
+
+<div class="line"></div>
+
+<table class="table">
+<tr class="total-row">
+<td>TOTAL SISTEMA</td>
+<td class="right" id="totalSistema"></td>
+</tr>
+</table>
+
+<br>
+
+<table class="table">
+<tr class="total-row">
+<td>EFECTIVO FÍSICO</td>
+<td class="right" id="efectivoFisico"></td>
+</tr>
+</table>
+
+<div class="line"></div>
+
+<table class="table">
+<tr class="total-row">
+<td>DIFERENCIA</td>
+<td class="right" id="diferencia"></td>
+</tr>
+</table>
+
+<div class="center bold" id="resultado"></div>
+
+<div class="line"></div>
+
+<p>
+Observación:<br>
+<span class="obs" id="observacion"></span>
+</p>
+
+<p>
+Estado: <span id="estado"></span>
+</p>
+
+<div class="firma">
+____________________<br>
+Responsable
+</div>
+
+</div>
+
+</body>
+</html>
