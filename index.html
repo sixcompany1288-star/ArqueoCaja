@@ -18,7 +18,7 @@
 <body>
     <div class="center bold" style="font-size: 14px;">TICKET DE ARQUEO</div>
     <div class="line"></div>
-    
+
     <div>
         <b>Caja:</b> <span id="caja"></span><br>
         <b>Cajero:</b> <span id="cajero"></span><br>
@@ -61,45 +61,58 @@
 
     <script>
         const p = new URLSearchParams(window.location.search);
-        const moneda = (v) => "$ " + parseFloat(v || 0).toLocaleString('es-CO');
+        const moneda = (v) => "Q " + parseFloat(v || 0).toLocaleString('es-CO');
 
-        // Cargar Datos de Encabezado
-        document.getElementById('caja').innerText = p.get('caja');
-        document.getElementById('cajero').innerText = p.get('cajero');
-        document.getElementById('apertura').innerText = p.get('fechaApertura');
-        document.getElementById('cierre').innerText = p.get('fechaCierre');
-        document.getElementById('sIni').innerText = moneda(p.get('saldoInicial'));
-        document.getElementById('ing').innerText = moneda(p.get('ingresos'));
-        document.getElementById('egr').innerText = moneda(p.get('egresos'));
-        document.getElementById('tSis').innerText = moneda(p.get('totalSistema'));
-        document.getElementById('eFis').innerText = moneda(p.get('efectivoFisico'));
-        document.getElementById('dif').innerText = moneda(p.get('diferencia'));
-        document.getElementById('obs').innerText = p.get('observacion') || "Sin novedades";
-        document.getElementById('est').innerText = p.get('estado');
+        document.getElementById('caja').innerText      = p.get('caja')          || '';
+        document.getElementById('cajero').innerText    = p.get('cajero')        || '';
+        document.getElementById('apertura').innerText  = p.get('fechaApertura') || '';
+        document.getElementById('cierre').innerText    = p.get('fechaCierre')   || '';
+        document.getElementById('sIni').innerText      = moneda(p.get('saldoInicial'));
+        document.getElementById('ing').innerText       = moneda(p.get('ingresos'));
+        document.getElementById('egr').innerText       = moneda(p.get('egresos'));
+        document.getElementById('tSis').innerText      = moneda(p.get('totalSistema'));
+        document.getElementById('eFis').innerText      = moneda(p.get('efectivoFisico'));
+        document.getElementById('dif').innerText       = moneda(p.get('diferencia'));
+        document.getElementById('obs').innerText       = p.get('observacion')   || 'Sin novedades';
+        document.getElementById('est').innerText       = p.get('estado')        || '';
 
-        // Procesar Listas sin agrupar
-        const cants = (p.get('cantidades') || "").split(',');
-        const prods = (p.get('productos') || "").split(',');
-        const prices = (p.get('totales') || "").split(',');
+        // ── Separador: AppSheet envía " , " (espacio+coma+espacio) ──
+        const SEP = ' , ';
+
+        function parseLista(key) {
+            const raw = p.get(key) || '';
+            // Intentar con " , " primero, si solo hay 1 elemento probar con ","
+            const arr = raw.includes(SEP) ? raw.split(SEP) : raw.split(',');
+            return arr.map(v => v.trim()).filter((v, i, a) => i < a.length);
+        }
+
+        const cants  = parseLista('cantidades');
+        const prods  = parseLista('productos');
+        const prices = parseLista('totales');
+
+        // Debug: mostrar en consola cuántos items llegaron
+        console.log('cantidades:', cants.length, cants);
+        console.log('productos:', prods.length, prods);
+        console.log('totales:', prices.length, prices);
+
         const tbody = document.getElementById('tablaBody');
+        const total = Math.max(cants.length, prods.length, prices.length);
 
-        // Recorremos la lista de productos y creamos una fila para CADA UNO
-        prods.forEach((nombre, i) => {
-            let n = nombre.trim();
-            if(n !== "") {
-                const q = parseFloat(cants[i] || 0);
-                const precio = parseFloat(prices[i] || 0);
-                const subtotal = q * precio;
+        for (let i = 0; i < total; i++) {
+            const nombre = (prods[i]  || '').trim();
+            const q      = parseFloat(cants[i]  || 0);
+            const precio = parseFloat(prices[i] || 0);
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${q}</td>
-                    <td>${n}</td>
-                    <td class="right">${moneda(subtotal)}</td>
-                `;
-                tbody.appendChild(tr);
-            }
-        });
+            if (nombre === '') continue;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${q}</td>
+                <td>${nombre}</td>
+                <td class="right">${moneda(precio)}</td>
+            `;
+            tbody.appendChild(tr);
+        }
 
         window.onload = () => { setTimeout(() => { window.print(); }, 800); };
     </script>
