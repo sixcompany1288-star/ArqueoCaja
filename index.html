@@ -43,6 +43,7 @@
     <table>
         <tr><td>SALDO INICIAL:</td><td class="right" id="sIni"></td></tr>
         <tr><td>(+) INGRESOS:</td><td class="right" id="ing"></td></tr>
+        <tr><td>(-) DESCUENTOS REALIZADOS:</td><td class="right" id="desc"></td></tr>
         <tr><td>(-) EGRESOS:</td><td class="right" id="egr"></td></tr>
         <tr class="bold"><td>TOTAL SISTEMA:</td><td class="right" id="tSis"></td></tr>
         <tr class="bold"><td>EFECTIVO FÍSICO:</td><td class="right" id="eFis"></td></tr>
@@ -69,6 +70,7 @@
         document.getElementById('cierre').innerText    = p.get('fechaCierre')   || '';
         document.getElementById('sIni').innerText      = moneda(p.get('saldoInicial'));
         document.getElementById('ing').innerText       = moneda(p.get('ingresos'));
+        document.getElementById('desc').innerText      = moneda(p.get('descuentos'));
         document.getElementById('egr').innerText       = moneda(p.get('egresos'));
         document.getElementById('tSis').innerText      = moneda(p.get('totalSistema'));
         document.getElementById('eFis').innerText      = moneda(p.get('efectivoFisico'));
